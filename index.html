@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="id" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buku Tamu Digital BKD</title>
+  
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+  html, body { height: 100%; }
+  body {
+    font-family: 'Outfit', system-ui, sans-serif;
+    background: linear-gradient(135deg, #f5f1e8 0%, #ebe3d1 100%);
+    --primary-color: #1a3a52;
+    --accent-color: #b8860b;
+    --background-color: #f5f1e8;
+    --surface-color: #fffdf7;
+    --text-color: #3d2e1a;
+  }
+  .font-display { font-family: 'Fraunces', serif; }
+  .paper-texture {
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(120, 90, 40, 0.04) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(120, 90, 40, 0.04) 0%, transparent 40%);
+  }
+  .ornament::before, .ornament::after {
+    content: ''; display: inline-block; width: 40px; height: 1px; background: currentColor; vertical-align: middle; margin: 0 12px; opacity: 0.4;
+  }
+  .form-input { transition: all 0.2s ease; }
+  .form-input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(26, 58, 82, 0.1); }
+  .btn-primary { transition: all 0.2s ease; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .fade-in { animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .modal-backdrop { animation: backdropIn 0.2s ease; }
+  @keyframes backdropIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal-content { animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+  @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  .spinner { border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.7s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .success-check { animation: checkBounce 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+  @keyframes checkBounce { 0% { transform: scale(0); } 60% { transform: scale(1.2); } 100% { transform: scale(1); } }
+  .stamp { font-family: 'Fraunces', serif; border: 3px double currentColor; padding: 6px 14px; border-radius: 4px; display: inline-block; transform: rotate(-3deg); letter-spacing: 2px; font-weight: 600; }
+  .table-row:hover { background-color: rgba(26, 58, 82, 0.03); }
+  .toast { animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards; }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes toastOut { to { opacity: 0; transform: translateY(20px); } }
+  [data-lucide] { width: 1em; height: 1em; }
+  </style>
+</head>
+<body class="h-full w-full paper-texture">
+  <main id="app-wrapper" class="h-full w-full overflow-auto">
+   
+   <section id="guest-view" class="min-h-full w-full flex items-center justify-center p-4 md:p-8">
+    <div class="w-full max-w-2xl">
+     <header class="text-center mb-8 fade-in">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="background-color: var(--accent-color);">
+       <i data-lucide="book-open" class="text-white" style="width:28px;height:28px;"></i>
+      </div>
+      <div class="ornament text-xs uppercase tracking-[0.3em] mb-3" style="color: var(--text-color);">Buku Tamu</div>
+      <h1 class="font-display text-4xl md:text-5xl font-bold mb-2" style="color: var(--text-color);">Buku Tamu Digital</h1>
+      <p class="font-display italic text-lg" style="color: var(--text-color); opacity: 0.75;">Badan Kepegawaian Daerah</p>
+      <p class="mt-4 text-sm" style="color: var(--text-color); opacity: 0.65;">Selamat datang, silakan isi buku tamu</p>
+     </header>
+     
+     <div class="bg-white rounded-2xl shadow-xl p-6 md:p-10 fade-in" style="background-color: var(--surface-color);">
+      <form id="guest-form" class="space-y-5">
+       <div>
+        <label for="nama" class="block text-sm font-medium mb-2" style="color: var(--text-color);">Nama Lengkap <span style="color:var(--accent-color);">*</span></label> 
+        <input id="nama" name="nama" type="text" required class="form-input w-full px-4 py-3 rounded-lg border-2 border-stone-200 bg-stone-50" placeholder="Masukkan nama lengkap Anda">
+       </div>
+       <div>
+        <label for="nip" class="block text-sm font-medium mb-2" style="color: var(--text-color);">NIP / NIPPPK</label> 
+        <input id="nip" name="nip" type="text" class="form-input w-full px-4 py-3 rounded-lg border-2 border-stone-200 bg-stone-50" placeholder="Nomor Induk Pegawai (opsional)">
+       </div>
+       <div>
+        <label for="instansi" class="block text-sm font-medium mb-2" style="color: var(--text-color);">Asal Instansi / Organisasi <span style="color:var(--accent-color);">*</span></label> 
+        <input id="instansi" name="instansi" type="text" required class="form-input w-full px-4 py-3 rounded-lg border-2 border-stone-200 bg-stone-50" placeholder="Nama instansi atau organisasi">
+       </div>
+       <div>
+        <label for="bidang" class="block text-sm font-medium mb-2" style="color: var(--text-color);">Bidang yang Dituju <span style="color:var(--accent-color);">*</span></label> 
+        <select id="bidang" name="bidang" required class="form-input w-full px-4 py-3 rounded-lg border-2 border-stone-200 bg-stone-50"> 
+          <option value="">-- Pilih bidang tujuan --</option> 
+          <option value="Pimpinan">Pimpinan</option> 
+          <option value="Sekretariat">Sekretariat</option> 
+          <option value="Bidang Pengadaan, Pemberhentian dan Informasi ASN">Bidang Pengadaan, Pemberhentian dan Informasi ASN</option> 
+          <option value="Bidang Mutasi ASN">Bidang Mutasi ASN</option> 
+          <option value="Bidang Pengembangan ASN">Bidang Pengembangan ASN</option> 
+          <option value="Bidang Pembinaan ASN">Bidang Pembinaan ASN</option> 
+          <option value="UPTD. Penilaian Kompetensi Pegawai">UPTD. Penilaian Kompetensi Pegawai</option> 
+        </select>
+       </div>
+       <div>
+        <label for="keperluan" class="block text-sm font-medium mb-2" style="color: var(--text-color);">Keperluan / Tujuan Kunjungan <span style="color:var(--accent-color);">*</span></label> 
+        <textarea id="keperluan" name="keperluan" rows="3" required class="form-input w-full px-4 py-3 rounded-lg border-2 border-stone-200 bg-stone-50 resize-none" placeholder="Jelaskan keperluan kunjungan Anda"></textarea>
+       </div>
+       <div id="form-error" class="hidden text-sm px-4 py-3 rounded-lg" style="background-color:#fee; color:#b91c1c;"></div>
+       <button type="submit" id="submit-btn" class="btn-primary w-full py-4 rounded-lg text-white font-semibold text-base flex items-center justify-center gap-2" style="background-color: var(--primary-color);"> 
+        <span id="submit-text">Kirim Buku Tamu</span> 
+        <i data-lucide="send" id="submit-icon"></i> 
+        <span id="submit-spinner" class="spinner hidden"></span> 
+       </button>
+      </form>
+     </div>
+     
+     <footer class="mt-8 flex justify-between items-center text-xs" style="color: var(--text-color); opacity: 0.55;">
+      <span id="entry-count">Menghubungkan ke sistem...</span> 
+      <button id="admin-btn" class="flex items-center gap-1.5 hover:opacity-100 transition-opacity" style="opacity:0.8;"> 
+        <i data-lucide="shield"></i> <span>Admin</span> 
+      </button>
+     </footer>
+    </div>
+   </section>
+
+   <section id="success-view" class="hidden min-h-full w-full flex items-center justify-center p-4 md:p-8">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center" style="background-color: var(--surface-color);">
+     <div class="success-check w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-6" style="background-color: var(--primary-color);">
+      <i data-lucide="check" class="text-white" style="width:40px;height:40px;"></i>
+     </div>
+     <div class="stamp mb-6 text-xs" style="color: var(--accent-color);">TERCATAT</div>
+     <h2 class="font-display text-3xl font-bold mb-3" style="color: var(--text-color);">Terima Kasih!</h2>
+     <p class="mb-8" style="color: var(--text-color); opacity: 0.7;">Kehadiran Anda telah tersimpan di sistem. Silakan menunggu di ruang tunggu.</p>
+     <button id="new-entry-btn" class="btn-primary px-6 py-3 rounded-lg text-white font-medium inline-flex items-center gap-2" style="background-color: var(--primary-color);"> 
+      <i data-lucide="plus"></i> Isi Tamu Baru 
+     </button>
+    </div>
+   </section>
+
+   <section id="admin-view" class="hidden min-h-full w-full p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <div>
+       <div class="ornament text-xs uppercase tracking-[0.3em] mb-2" style="color: var(--text-color);">Panel Admin</div>
+       <h1 class="font-display text-3xl md:text-4xl font-bold" style="color: var(--text-color);">Data Buku Tamu</h1>
+      </div>
+      <div class="flex flex-wrap gap-2">
+       <button id="refresh-btn" class="btn-primary px-4 py-2.5 rounded-lg text-white font-medium text-sm inline-flex items-center gap-2" style="background-color: var(--accent-color);"> 
+         <i data-lucide="refresh-cw"></i> Segarkan Data 
+       </button> 
+       <button id="download-all-btn" class="btn-primary px-4 py-2.5 rounded-lg text-white font-medium text-sm inline-flex items-center gap-2" style="background-color: var(--primary-color);"> 
+         <i data-lucide="file-spreadsheet"></i> Unduh Rekap (CSV) 
+       </button> 
+       <button id="back-btn" class="px-4 py-2.5 rounded-lg font-medium text-sm inline-flex items-center gap-2 border-2 transition-colors hover:bg-stone-100" style="color: var(--text-color); border-color: var(--text-color); background-color: var(--surface-color);"> 
+         <i data-lucide="arrow-left"></i> Kembali 
+       </button>
+      </div>
+     </div>
+     
+     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div class="rounded-xl p-4" style="background-color: var(--surface-color);">
+       <div class="text-xs uppercase tracking-wider opacity-60 mb-1" style="color: var(--text-color);">Total Tamu</div>
+       <div id="stat-total" class="font-display text-3xl font-bold" style="color: var(--text-color);">0</div>
+      </div>
+      <div class="rounded-xl p-4" style="background-color: var(--surface-color);">
+       <div class="text-xs uppercase tracking-wider opacity-60 mb-1" style="color: var(--text-color);">Hari Ini</div>
+       <div id="stat-today" class="font-display text-3xl font-bold" style="color: var(--text-color);">0</div>
+      </div>
+      <div class="rounded-xl p-4" style="background-color: var(--surface-color);">
+       <div class="text-xs uppercase tracking-wider opacity-60 mb-1" style="color: var(--text-color);">Minggu Ini</div>
+       <div id="stat-week" class="font-display text-3xl font-bold" style="color: var(--text-color);">0</div>
+      </div>
+      <div class="rounded-xl p-4" style="background-color: var(--surface-color);">
+       <div class="text-xs uppercase tracking-wider opacity-60 mb-1" style="color: var(--text-color);">Bidang Terpopuler</div>
+       <div id="stat-top" class="font-display text-base font-semibold leading-tight pt-1" style="color: var(--text-color);">-</div>
+      </div>
+     </div>
+     
+     <div class="mb-4 relative">
+      <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 opacity-40" style="color: var(--text-color);"></i> 
+      <input id="search-input" type="text" placeholder="Cari nama, instansi, atau bidang..." class="form-input w-full pl-11 pr-4 py-3 rounded-lg border-2 border-stone-200" style="background-color: var(--surface-color);">
+     </div>
+     
+     <div class="rounded-xl overflow-hidden shadow-sm" style="background-color: var(--surface-color);">
+      <div class="overflow-x-auto">
+       <table class="w-full text-sm">
+        <thead class="text-xs uppercase tracking-wider" style="background-color: var(--primary-color); color: white;">
+         <tr>
+          <th class="px-4 py-3 text-left">Waktu</th>
+          <th class="px-4 py-3 text-left">Nama</th>
+          <th class="px-4 py-3 text-left">NIP/NIPPPK</th>
+          <th class="px-4 py-3 text-left">Instansi</th>
+          <th class="px-4 py-3 text-left">Bidang Dituju</th>
+          <th class="px-4 py-3 text-left">Keperluan</th>
+          <th class="px-4 py-3 text-center">Aksi</th>
+         </tr>
+        </thead>
+        <tbody id="admin-tbody" style="color: var(--text-color);"></tbody>
+       </table>
+      </div>
+      <div id="empty-state" class="hidden p-12 text-center" style="color: var(--text-color);">
+       <i data-lucide="inbox" class="mx-auto mb-3 opacity-30" style="width:48px;height:48px;"></i>
+       <p class="opacity-60" id="empty-text">Belum ada data tamu</p>
+      </div>
+     </div>
+    </div>
+   </section>
+
+   <div id="password-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-content bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6" style="background-color: var(--surface-color);">
+     <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background-color: var(--accent-color);">
+       <i data-lucide="lock" class="text-white"></i>
+      </div>
+      <h3 class="font-display text-xl font-bold" style="color: var(--text-color);">Akses Admin</h3>
+     </div>
+     <p class="text-sm mb-4 opacity-70" style="color: var(--text-color);">Masukkan kata sandi untuk membuka panel admin.</p>
+     <form id="password-form">
+      <input id="password-input" type="password" placeholder="Kata sandi" class="form-input w-full px-4 py-3 rounded-lg border-2 border-stone-200 bg-stone-50 mb-2" autofocus>
+      <p id="password-error" class="hidden text-xs mb-3" style="color:#b91c1c;">Kata sandi salah</p>
+      <div class="flex gap-2 mt-4">
+       <button type="button" id="password-cancel" class="flex-1 px-4 py-2.5 rounded-lg font-medium border-2 text-sm hover:bg-stone-100" style="color: var(--text-color); border-color: var(--text-color);">Batal</button> 
+       <button type="submit" class="btn-primary flex-1 px-4 py-2.5 rounded-lg text-white font-medium text-sm" style="background-color: var(--primary-color);">Masuk</button>
+      </div>
+     </form>
+    </div>
+   </div>
+
+   <div id="delete-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-content bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6" style="background-color: var(--surface-color);">
+     <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 rounded-full flex items-center justify-center bg-red-100">
+       <i data-lucide="alert-triangle" style="color:#b91c1c;"></i>
+      </div>
+      <h3 class="font-display text-xl font-bold" style="color: var(--text-color);">Hapus Data?</h3>
+     </div>
+     <p class="text-sm mb-6 opacity-70" style="color: var(--text-color);">Data tamu ini akan dihapus permanen dari Google Sheets.</p>
+     <div class="flex gap-2">
+      <button id="delete-cancel" class="flex-1 px-4 py-2.5 rounded-lg font-medium border-2 text-sm hover:bg-stone-100" style="color: var(--text-color); border-color: var(--text-color);">Batal</button> 
+      <button id="delete-confirm" class="btn-primary flex-1 px-4 py-2.5 rounded-lg text-white font-medium text-sm" style="background-color: #b91c1c;">Hapus</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-2"></div>
+  </main>
+  
+  <script>
+  // ==========================================
+  // KONFIGURASI LIVE GOOGLE SHEETS
+  // ==========================================
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyrG_I6wn2kh_-h7mQsb7e3Le_vePj9u3ByUtKZXWKrMl0rizNCGruVS2rooMbd56Qp/exec';
+  const ADMIN_PASSWORD = 'adminbkdkaltim'; 
+  
+  let allGuests = [];
+  let recordToDelete = null;
+  let searchTerm = '';
+
+  function showView(name) {
+    ['guest-view','success-view','admin-view'].forEach(id => {
+      document.getElementById(id).classList.toggle('hidden', id !== name);
+    });
+    document.getElementById('app-wrapper').scrollTop = 0;
+  }
+
+  function toast(msg, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    const bg = type === 'error' ? '#b91c1c' : (type === 'info' ? '#1a3a52' : '#15803d');
+    t.className = 'toast px-4 py-3 rounded-lg shadow-lg text-white text-sm font-medium flex items-center gap-2';
+    t.style.backgroundColor = bg;
+    t.innerHTML = `<i data-lucide="${type==='error'?'alert-circle':(type==='info'?'info':'check-circle')}"></i>${msg}`;
+    container.appendChild(t);
+    lucide.createIcons();
+    setTimeout(() => t.remove(), 3100);
+  }
+
+  async function fetchGuests() {
+    document.getElementById('entry-count').textContent = "Sinkronisasi...";
+    try {
+      const response = await fetch(SCRIPT_URL);
+      const data = await response.json();
+      allGuests = data.sort((a,b) => (b.waktu || '').localeCompare(a.waktu || ''));
+      updateCounts();
+      renderAdminTable();
+    } catch (e) {
+      document.getElementById('entry-count').textContent = "Koneksi Terputus";
+      toast('Gagal mengambil data dari Google Sheets', 'error');
+    }
+  }
+
+  function updateCounts() {
+    const total = allGuests.length;
+    document.getElementById('entry-count').textContent = `${total} tamu tercatat`;
+    document.getElementById('stat-total').textContent = total;
+
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const startOfWeek = startOfDay - (now.getDay() * 24 * 60 * 60 * 1000);
+
+    let today = 0, week = 0;
+    const bidangCount = {};
+    allGuests.forEach(g => {
+      const t = new Date(g.waktu).getTime();
+      if (t >= startOfDay) today++;
+      if (t >= startOfWeek) week++;
+      if (g.bidang) bidangCount[g.bidang] = (bidangCount[g.bidang] || 0) + 1;
+    });
+
+    document.getElementById('stat-today').textContent = today;
+    document.getElementById('stat-week').textContent = week;
+    const top = Object.entries(bidangCount).sort((a,b) => b[1]-a[1])[0];
+    document.getElementById('stat-top').textContent = top ? top[0].split(',')[0] : '-';
+  }
+
+  document.getElementById('guest-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    const record = {
+      action: 'create',
+      nama: document.getElementById('nama').value.trim(),
+      nip: document.getElementById('nip').value.trim(),
+      instansi: document.getElementById('instansi').value.trim(),
+      bidang: document.getElementById('bidang').value,
+      keperluan: document.getElementById('keperluan').value.trim(),
+      waktu: new Date().toISOString()
+    };
+
+    btn.disabled = true;
+    document.getElementById('submit-text').textContent = 'Mengirim...';
+    document.getElementById('submit-icon').classList.add('hidden');
+    document.getElementById('submit-spinner').classList.remove('hidden');
+
+    try {
+      await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(record) });
+      e.target.reset();
+      showView('success-view');
+      fetchGuests(); 
+    } catch (err) {
+      toast('Gagal mengirim data. Periksa internet.', 'error');
+    }
+    btn.disabled = false;
+    document.getElementById('submit-text').textContent = 'Kirim Buku Tamu';
+    document.getElementById('submit-icon').classList.remove('hidden');
+    document.getElementById('submit-spinner').classList.add('hidden');
+  });
+
+  document.getElementById('new-entry-btn').addEventListener('click', () => showView('guest-view'));
+
+  document.getElementById('admin-btn').addEventListener('click', () => {
+    document.getElementById('password-modal').classList.remove('hidden');
+    document.getElementById('password-input').value = '';
+    setTimeout(() => document.getElementById('password-input').focus(), 50);
+  });
+
+  document.getElementById('password-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (document.getElementById('password-input').value === ADMIN_PASSWORD) {
+      document.getElementById('password-modal').classList.add('hidden');
+      showView('admin-view');
+      renderAdminTable();
+    } else {
+      document.getElementById('password-error').classList.remove('hidden');
+    }
+  });
+
+  document.getElementById('back-btn').addEventListener('click', () => showView('guest-view'));
+  
+  document.getElementById('refresh-btn').addEventListener('click', () => {
+    toast('Memperbarui data...', 'info');
+    fetchGuests().then(() => toast('Data Terbaru Berhasil Dimuat'));
+  });
+
+  function renderAdminTable() {
+    const tbody = document.getElementById('admin-tbody');
+    const empty = document.getElementById('empty-state');
+    const filtered = allGuests.filter(g => {
+      if (!searchTerm) return true;
+      const q = searchTerm.toLowerCase();
+      return (g.nama || '').toLowerCase().includes(q) || (g.instansi || '').toLowerCase().includes(q) || (g.bidang || '').toLowerCase().includes(q);
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = ''; empty.classList.remove('hidden'); return;
+    }
+    empty.classList.add('hidden');
+    tbody.innerHTML = filtered.map(g => {
+      const d = new Date(g.waktu);
+      const waktu = d.toLocaleString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+      return `
+        <tr class="table-row border-b border-stone-100">
+          <td class="px-4 py-3 whitespace-nowrap text-xs opacity-70">${waktu}</td>
+          <td class="px-4 py-3 font-medium">${escapeHtml(g.nama)}</td>
+          <td class="px-4 py-3 text-xs opacity-70">${escapeHtml(g.nip) || '-'}</td>
+          <td class="px-4 py-3">${escapeHtml(g.instansi)}</td>
+          <td class="px-4 py-3 text-xs">${escapeHtml(g.bidang)}</td>
+          <td class="px-4 py-3 text-xs opacity-80 max-w-xs truncate" title="${escapeHtml(g.keperluan)}">${escapeHtml(g.keperluan)}</td>
+          <td class="px-4 py-3 text-center">
+            <div class="flex gap-1 justify-center">
+              <button class="download-row p-2 rounded-lg hover:bg-stone-100" data-id="${g.__backendId}"><i data-lucide="file-text" style="color:var(--primary-color)"></i></button>
+              <button class="delete-row p-2 rounded-lg hover:bg-red-50" data-id="${g.__backendId}"><i data-lucide="trash-2" style="color:#b91c1c"></i></button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+
+    tbody.querySelectorAll('.download-row').forEach(btn => btn.addEventListener('click', () => downloadPDF(allGuests.find(g => g.__backendId === btn.dataset.id))));
+    tbody.querySelectorAll('.delete-row').forEach(btn => btn.addEventListener('click', () => {
+      recordToDelete = allGuests.find(g => g.__backendId === btn.dataset.id);
+      document.getElementById('delete-modal').classList.remove('hidden');
+    }));
+    lucide.createIcons();
+  }
+
+  document.getElementById('search-input').addEventListener('input', (e) => { searchTerm = e.target.value; renderAdminTable(); });
+
+  document.getElementById('delete-confirm').addEventListener('click', async () => {
+    if (!recordToDelete) return;
+    try {
+      await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', id: recordToDelete.__backendId }) });
+      toast('Dihapus dari Cloud');
+      allGuests = allGuests.filter(g => g.__backendId !== recordToDelete.__backendId);
+      updateCounts(); renderAdminTable();
+    } catch (err) { toast('Gagal menghapus', 'error'); }
+    document.getElementById('delete-modal').classList.add('hidden');
+  });
+
+  function downloadPDF(rec) {
+    const { jsPDF } = window.jspdf; const doc = new jsPDF();
+    doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.text("BADAN KEPEGAWAIAN DAERAH PROVINSI KALTIM", 105, 20, { align: "center" });
+    doc.setFontSize(12); doc.text("BUKTI KUNJUNGAN TAMU", 105, 28, { align: "center" });
+    doc.line(20, 32, 190, 32); doc.setFontSize(11); doc.setFont("helvetica", "normal");
+    let y = 45; doc.text(`Nama: ${rec.nama}`, 25, y); y+=10; doc.text(`Instansi: ${rec.instansi}`, 25, y); y+=10; doc.text(`Bidang: ${rec.bidang}`, 25, y); y+=10;
+    doc.text("Keperluan:", 25, y); doc.text(doc.splitTextToSize(rec.keperluan, 110), 65, y);
+    y += 40; doc.text("Tamu,", 45, y, {align:"center"}); doc.text("Petugas,", 155, y, {align:"center"});
+    y += 30; doc.setFont("helvetica", "bold"); doc.text(`(${rec.nama})`, 45, y, {align:"center"}); doc.text("(....................)", 155, y, {align:"center"});
+    doc.save(`Bukti_${rec.nama}.pdf`);
+  }
+
+  document.getElementById('download-all-btn').addEventListener('click', () => {
+    const csv = '\ufeff' + 'Waktu,Nama,NIP,Instansi,Bidang,Keperluan\n' + allGuests.map(r => [new Date(r.waktu).toLocaleString(), r.nama, r.nip, r.instansi, r.bidang, r.keperluan].join(',')).join('\n');
+    const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); link.download = 'Rekap_BKD.csv'; link.click();
+  });
+
+  function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  lucide.createIcons(); fetchGuests();
+  </script>
+</body>
+</html>
