@@ -110,7 +110,7 @@
      </div>
      
      <footer class="mt-8 flex justify-between items-center text-xs" style="color: var(--text-color); opacity: 0.55;">
-      <span id="entry-count">Menghubungkan ke sistem...</span> 
+      <span id="entry-count">Sinkronisasi sistem...</span> 
       <button id="admin-btn" class="flex items-center gap-1.5 hover:opacity-100 transition-opacity" style="opacity:0.8;"> 
         <i data-lucide="shield"></i> <span>Admin</span> 
       </button>
@@ -420,16 +420,64 @@
     document.getElementById('delete-modal').classList.add('hidden');
   });
 
+  // ===== FUNGSI CETAK PDF SESUAI DOKUMEN BKD =====
   function downloadPDF(rec) {
-    const { jsPDF } = window.jspdf; const doc = new jsPDF();
-    doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.text("BADAN KEPEGAWAIAN DAERAH PROVINSI KALTIM", 105, 20, { align: "center" });
-    doc.setFontSize(12); doc.text("BUKTI KUNJUNGAN TAMU", 105, 28, { align: "center" });
-    doc.line(20, 32, 190, 32); doc.setFontSize(11); doc.setFont("helvetica", "normal");
-    let y = 45; doc.text(`Nama: ${rec.nama}`, 25, y); y+=10; doc.text(`Instansi: ${rec.instansi}`, 25, y); y+=10; doc.text(`Bidang: ${rec.bidang}`, 25, y); y+=10;
-    doc.text("Keperluan:", 25, y); doc.text(doc.splitTextToSize(rec.keperluan, 110), 65, y);
-    y += 40; doc.text("Tamu,", 45, y, {align:"center"}); doc.text("Petugas,", 155, y, {align:"center"});
-    y += 30; doc.setFont("helvetica", "bold"); doc.text(`(${rec.nama})`, 45, y, {align:"center"}); doc.text("(....................)", 155, y, {align:"center"});
-    doc.save(`Bukti_${rec.nama}.pdf`);
+    if (!window.jspdf) {
+      toast('Sistem PDF belum siap.', 'error');
+      return;
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const d = new Date(rec.waktu);
+    
+    // Format Waktu Resmi (Contoh: 23 April 2026 pukul 11.35 WITA)
+    const tgl = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+    const jam = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.');
+    const ts = `${tgl} pukul ${jam} WITA`;
+
+    // Header Instansi (Kop Surat)
+    doc.setFontSize(14); doc.setFont("helvetica", "bold"); 
+    doc.text("PEMERINTAH PROVINSI KALIMANTAN TIMUR", 105, 20, { align: "center" });
+    doc.text("BADAN KEPEGAWAIAN DAERAH", 105, 28, { align: "center" });
+    
+    doc.setFontSize(10); doc.setFont("helvetica", "normal");
+    doc.text("Jl. M. Yamin No.1, Gn. Kelua, Samarinda Ulu, Kota Samarinda, Kalimantan Timur 75123", 105, 34, { align: "center" });
+    
+    doc.setLineWidth(0.5); doc.line(20, 38, 190, 38);
+
+    // Judul
+    doc.setFontSize(12); doc.setFont("helvetica", "bold");
+    doc.text("BUKTI KUNJUNGAN TAMU DIGITAL", 105, 48, { align: "center" });
+
+    // Tabel Data
+    doc.setFontSize(11); doc.setFont("helvetica", "normal");
+    let y = 60; const startX = 25; const colonX = 65;
+
+    doc.text("Waktu Kunjungan", startX, y); doc.text(":", colonX, y); doc.text(ts, colonX + 3, y); y += 10;
+    doc.text("Nama Lengkap", startX, y); doc.text(":", colonX, y); doc.text(rec.nama || '-', colonX + 3, y); y += 10;
+    doc.text("NIP/NIPPPK", startX, y); doc.text(":", colonX, y); doc.text(rec.nip || '-', colonX + 3, y); y += 10;
+    doc.text("Asal Instansi", startX, y); doc.text(":", colonX, y); doc.text(rec.instansi || '-', colonX + 3, y); y += 10;
+    doc.text("Bidang Tujuan", startX, y); doc.text(":", colonX, y); doc.text(rec.bidang || '-', colonX + 3, y); y += 10;
+    doc.text("Keperluan", startX, y); doc.text(":", colonX, y); 
+    
+    const splitKeperluan = doc.splitTextToSize(rec.keperluan || '-', 115);
+    doc.text(splitKeperluan, colonX + 3, y);
+    
+    y += (splitKeperluan.length * 7) + 25; 
+
+    // Tanda Tangan
+    const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+    doc.text(`Samarinda, ${today}`, 155, y - 10, { align: "center" });
+    doc.text("Tamu yang Berkunjung,", 45, y, { align: "center" });
+    doc.text("Pegawai yang Melayani,", 155, y, { align: "center" });
+    
+    y += 35;
+    doc.setFont("helvetica", "bold");
+    doc.text(`( ${rec.nama} )`, 45, y, { align: "center" });
+    doc.text("( .......................................... )", 155, y, { align: "center" });
+
+    doc.save(`Bukti_Kunjungan_${rec.nama.replace(/\s+/g, '_')}.pdf`);
+    toast('PDF berhasil diunduh');
   }
 
   document.getElementById('download-all-btn').addEventListener('click', () => {
